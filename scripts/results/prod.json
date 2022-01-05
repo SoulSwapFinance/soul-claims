@@ -1,0 +1,11 @@
+{
+    "merkleRoot": "",
+    "tokenTotal": "",
+    "claims": {
+        "": {
+            "index": 0,
+            "amount": "",
+            "proof": []
+        }
+    }
+}
