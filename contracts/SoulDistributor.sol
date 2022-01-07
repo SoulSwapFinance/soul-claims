@@ -9,7 +9,7 @@ contract SoulDistributor is ISoulDistributor, Ownable {
 
     // SOUL TOKEN && (VERIFIABLE) MERKLE ROOT
     IERC20 public immutable override soul = IERC20(0xe2fb177009FF39F52C0134E8007FA0e4BaAcBd07);
-    bytes32 public override merkleRoot = 0x2ac1f9a51bb253aac91d25ade4dd66036b817a7345064bba8b1fe3571ee33ce9;
+    bytes32 public override merkleRoot = 0x30cee81b773540443687ae0ada8747397a3548e589117d8ea60924a3198afcea;
 
     // PACKED ARRAY OF BOOLEANS
     mapping(uint => uint) private claimedBitMap;

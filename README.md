@@ -1,6 +1,6 @@
 # Deployed Contract
 
-[SoulDistributor.sol](https://ftmscan.com/address/0x209E5933f28D62ED45288cd939b64187DBC018c8#read): 0x209E5933f28D62ED45288cd939b64187DBC018c8
+[SoulDistributor.sol](https://ftmscan.com/address/0xA121b64fd62a99869767650879C5bEc776415a45#read): 0xA121b64fd62a99869767650879C5bEc776415a45
 
 ```
 SoulDistributor Test Output
