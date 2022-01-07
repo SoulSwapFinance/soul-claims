@@ -8,18 +8,24 @@ import "./interfaces/ISoulDistributor.sol";
 contract SoulDistributor is ISoulDistributor, Ownable {
 
     // SOUL TOKEN && (VERIFIABLE) MERKLE ROOT
-    IERC20 public immutable soul = IERC20(0xe2fb177009FF39F52C0134E8007FA0e4BaAcBd07);
-    bytes32 public merkleRoot = 0x2ac1f9a51bb253aac91d25ade4dd66036b817a7345064bba8b1fe3571ee33ce9;
+    IERC20 public immutable override soul = IERC20(0xe2fb177009FF39F52C0134E8007FA0e4BaAcBd07);
+    bytes32 public override merkleRoot = 0x2ac1f9a51bb253aac91d25ade4dd66036b817a7345064bba8b1fe3571ee33ce9;
 
     // PACKED ARRAY OF BOOLEANS
     mapping(uint => uint) private claimedBitMap;
 
-    // TIME VARIABLES
-    uint public immutable startTime = block.timestamp;
-    uint public immutable endTime = block.timestamp + 180 days;
+    // TIME VARIABLES (DEFAULTS AT DEPLOYMENT)
+    uint public startTime = block.timestamp;
+    uint public duration;
+    uint public endTime = block.timestamp + 45 days;
 
-    function initialize(bytes32 _merkleRoot) public onlyOwner {
+    // OWNER INITIALIZES
+    function initialize(bytes32 _merkleRoot, uint _startTime, uint _days) public onlyOwner {
         merkleRoot = _merkleRoot;
+        startTime = _startTime;
+        uint _duration = _days * 1 days;
+        endTime =  _startTime + _duration;
+        duration = _duration;
     }
 
     // CLAIM VIEW
@@ -37,6 +43,7 @@ contract SoulDistributor is ISoulDistributor, Ownable {
         claimedBitMap[claimedWordIndex] = claimedBitMap[claimedWordIndex] | (1 << claimedBitIndex);
     }
 
+    // CLAIMS
     function claim(uint index, address account, uint amount, bytes32[] calldata merkleProof) external override {
         require(!isClaimed(index), 'claim: already claimed.');
 
@@ -48,15 +55,14 @@ contract SoulDistributor is ISoulDistributor, Ownable {
         _setClaimed(index); // sets claimed
         require(block.timestamp >= startTime, '_setClaimed: too soon'); // blocks early claims
         require(block.timestamp <= endTime, '_setClaimed: too late'); // blocks late claims
-        require(IERC20(soul).transfer(account, amount), '_setClaimed: transfer failed'); // transfers tokens
+        require(soul.transfer(account, amount), '_setClaimed: transfer failed'); // transfers tokens
 
         emit Claimed(index, account, amount);
     }
 
     // COLLECT UNCLAIMED TOKENS
     function collectUnclaimed(uint amount) public onlyOwner {
-        require(block.timestamp >= endTime, 'collectUnclaimed: too soon');
-        require(IERC20(soul).transfer(owner(), amount), 'collectUnclaimed: transfer failed');
+        require(soul.transfer(owner(), amount), 'collectUnclaimed: transfer failed');
     }
 
 }

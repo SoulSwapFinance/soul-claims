@@ -26,10 +26,7 @@ abstract contract Context {
 
 // File: @openzeppelin/contracts/access/Ownable.sol
 
-// OpenZeppelin Contracts v4.4.1 (access/Ownable.sol)
-
 pragma solidity ^0.8.0;
-
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -121,7 +118,7 @@ library MerkleProof {
     function verify(bytes32[] memory proof, bytes32 root, bytes32 leaf) internal pure returns (bool) {
         bytes32 computedHash = leaf;
 
-        for (uint i = 0; i < proof.length; i++) {
+        for (uint256 i = 0; i < proof.length; i++) {
             bytes32 proofElement = proof[i];
 
             if (computedHash <= proofElement) {
@@ -138,6 +135,9 @@ library MerkleProof {
     }
 }
 
+// File: contracts/interfaces/IERC20.sol
+
+
 // File: @openzeppelin/contracts/token/ERC20/IERC20.sol
 
 pragma solidity >=0.8.0;
@@ -149,12 +149,12 @@ interface IERC20 {
     /**
      * @dev Returns the amount of tokens in existence.
      */
-    function totalSupply() external view returns (uint);
+    function totalSupply() external view returns (uint256);
 
     /**
      * @dev Returns the amount of tokens owned by `account`.
      */
-    function balanceOf(address account) external view returns (uint);
+    function balanceOf(address account) external view returns (uint256);
 
     /**
      * @dev Moves `amount` tokens from the caller's account to `recipient`.
@@ -163,7 +163,7 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transfer(address recipient, uint amount) external returns (bool);
+    function transfer(address recipient, uint256 amount) external returns (bool);
 
     /**
      * @dev Returns the remaining number of tokens that `spender` will be
@@ -172,7 +172,7 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -188,7 +188,7 @@ interface IERC20 {
      *
      * Emits an {Approval} event.
      */
-    function approve(address spender, uint amount) external returns (bool);
+    function approve(address spender, uint256 amount) external returns (bool);
 
     /**
      * @dev Moves `amount` tokens from `sender` to `recipient` using the
@@ -199,7 +199,7 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address sender, address recipient, uint amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -207,19 +207,18 @@ interface IERC20 {
      *
      * Note that `value` may be zero.
      */
-    event Transfer(address indexed from, address indexed to, uint value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
     /**
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}. `value` is the new allowance.
      */
-    event Approval(address indexed owner, address indexed spender, uint value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 // File: contracts/interfaces/ISoulDistributor.sol
 
-pragma solidity >=0.8.0;
-
+pragma solidity >=0.5.0;
 
 // Allows anyone to claim a token if they exist in a merkle root.
 interface ISoulDistributor {
@@ -228,36 +227,39 @@ interface ISoulDistributor {
     // Returns the merkle root of the merkle tree containing account balances available to claim.
     function merkleRoot() external view returns (bytes32);
     // Returns true if the index has been marked claimed.
-    function isClaimed(uint index) external view returns (bool);
+    function isClaimed(uint256 index) external view returns (bool);
     // Claim the given amount of the token to the given address. Reverts if the inputs are invalid.
-    function claim(uint index, address account, uint amount, bytes32[] calldata merkleProof) external;
+    function claim(uint256 index, address account, uint256 amount, bytes32[] calldata merkleProof) external;
 
     // This event is triggered whenever a call to #claim succeeds.
-    event Claimed(uint index, address account, uint amount);
+    event Claimed(uint256 index, address account, uint256 amount);
 }
 
 // File: contracts/SoulDistributor.sol
 
 pragma solidity >=0.8.0;
 
-
-
-
 contract SoulDistributor is ISoulDistributor, Ownable {
 
     // SOUL TOKEN && (VERIFIABLE) MERKLE ROOT
-    IERC20 public immutable soul = IERC20(0xe2fb177009FF39F52C0134E8007FA0e4BaAcBd07);
-    bytes32 public merkleRoot;
+    IERC20 public immutable override soul = IERC20(0xe2fb177009FF39F52C0134E8007FA0e4BaAcBd07);
+    bytes32 public override merkleRoot = 0x2ac1f9a51bb253aac91d25ade4dd66036b817a7345064bba8b1fe3571ee33ce9;
 
     // PACKED ARRAY OF BOOLEANS
     mapping(uint => uint) private claimedBitMap;
 
-    // TIME VARIABLES
-    uint public immutable startTime = block.timestamp;
-    uint public immutable endTime = block.timestamp + 180 days;
+    // TIME VARIABLES (DEFAULTS AT DEPLOYMENT)
+    uint public startTime = block.timestamp;
+    uint public duration;
+    uint public endTime = block.timestamp + 45 days;
 
-    function initialize(bytes32 _merkleRoot) public onlyOwner {
+    // OWNER INITIALIZES
+    function initialize(bytes32 _merkleRoot, uint _startTime, uint _days) public onlyOwner {
         merkleRoot = _merkleRoot;
+        startTime = _startTime;
+        uint _duration = _days * 1 days;
+        endTime =  _startTime + _duration;
+        duration = _duration;
     }
 
     // CLAIM VIEW
@@ -275,6 +277,7 @@ contract SoulDistributor is ISoulDistributor, Ownable {
         claimedBitMap[claimedWordIndex] = claimedBitMap[claimedWordIndex] | (1 << claimedBitIndex);
     }
 
+    // CLAIMS
     function claim(uint index, address account, uint amount, bytes32[] calldata merkleProof) external override {
         require(!isClaimed(index), 'claim: already claimed.');
 
@@ -286,15 +289,14 @@ contract SoulDistributor is ISoulDistributor, Ownable {
         _setClaimed(index); // sets claimed
         require(block.timestamp >= startTime, '_setClaimed: too soon'); // blocks early claims
         require(block.timestamp <= endTime, '_setClaimed: too late'); // blocks late claims
-        require(IERC20(soul).transfer(account, amount), '_setClaimed: transfer failed'); // transfers tokens
+        require(soul.transfer(account, amount), '_setClaimed: transfer failed'); // transfers tokens
 
         emit Claimed(index, account, amount);
     }
 
     // COLLECT UNCLAIMED TOKENS
     function collectUnclaimed(uint amount) public onlyOwner {
-        require(block.timestamp >= endTime, 'collectUnclaimed: too soon');
-        require(IERC20(soul).transfer(owner(), amount), 'collectUnclaimed: transfer failed');
+        require(soul.transfer(owner(), amount), 'collectUnclaimed: transfer failed');
     }
 
 }

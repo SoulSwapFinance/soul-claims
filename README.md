@@ -1,5 +1,6 @@
-# soul-claims
-Repository containing the airdrop smart contract for UniLayer holders to claim their SOUL.
+# Deployed Contract
+
+[SoulDistributor.sol](https://ftmscan.com/address/0x209E5933f28D62ED45288cd939b64187DBC018c8#read): 0x209E5933f28D62ED45288cd939b64187DBC018c8
 
 ```
 SoulDistributor Test Output
